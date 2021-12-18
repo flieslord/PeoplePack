@@ -30,6 +30,7 @@ func initClient() (*redis.Client, error) {
 		Addr: "localhost:6379",
 		Password: "",
 		DB: 0,
+		PoolSize: 1000,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 	defer cancel()
