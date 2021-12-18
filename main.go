@@ -19,10 +19,12 @@ var (
 //	Cid string `json:"cid"`
 //	Uid string `json:"uid"`
 //}
+//设置日志输出位置
 func setUpLogger() {
 	logFileLocation, _ := os.OpenFile("./log/test.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0744)
 	log.SetOutput(logFileLocation)
 }
+//初始化redis客户端
 func initClient() (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: "localhost:6379",
@@ -37,6 +39,7 @@ func initClient() (*redis.Client, error) {
 	}
 	return rdb, nil
 }
+//服务器启动后将文件内容存入redis
 func addToRedis(lines []string) {
 	wg.Add(1)
 	var rdb *redis.Client
@@ -52,6 +55,7 @@ func addToRedis(lines []string) {
 	}
 	wg.Done()
 }
+//判定服务
 func matchCrowd(cid, uid string) bool {
 	var err error
 	var rdb *redis.Client
@@ -70,6 +74,7 @@ func isMatch(c *gin.Context) {
 	uid := c.PostForm("uid")
 	c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
 }
+//增量更新
 func updateCrowd(cid, uid string) {
 	var err error
 	var rdb *redis.Client
