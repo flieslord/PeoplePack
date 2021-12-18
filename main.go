@@ -114,6 +114,11 @@ func main() {
 	r.POST("/updateCrowd", func (c *gin.Context) {
 		update(c)
 	})
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Ping OK",
+		})
+	})
 	log.Printf("Server start succeed")
 	r.Run(":8080")
 }
