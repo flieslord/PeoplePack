@@ -101,6 +101,7 @@ func main() {
 	lines := []string{}
 	iterator := 0
 	scanner := bufio.NewScanner(file)
+	//逐行读取文件，每2000行开启一个协程将它存储到redis
 	for scanner.Scan() {
 		line := scanner.Text()
 		iterator++
@@ -111,6 +112,9 @@ func main() {
 			lines = nil
 			go addToRedis(lines)
 		}
+	}
+	if lines != nil {
+		go addToRedis(lines)
 	}
 	wg.Wait()
 	r.POST("/matchCrowd", func (c *gin.Context) {
