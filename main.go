@@ -82,6 +82,15 @@ func updateCrowd(cid, uid string) {
 	if rdb, err = initClient(); err != nil {
 		log.Printf("Redis connect error")
 	}
+	//写入源文件
+	go func(cid string, uid string) {
+		wg.Add(1)
+		file, _ := os.OpenFile("./data/test.txt", os.O_APPEND, 0744)
+		writer := bufio.NewWriter(file)
+		fmt.Fprintln(writer, cid + " " + uid)
+		writer.Flush()
+	}(cid, uid)
+	wg.Wait()
 	defer rdb.Close()
 	rdb.SAdd(ctx, cid, uid)
 }
