@@ -3,14 +3,16 @@ package main
 import (
 	"bufio"
 	"context"
-	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 var (
 	wg sync.WaitGroup
