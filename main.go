@@ -26,7 +26,7 @@ func setUpLogger() {
 }
 func initClient() (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr: "redis-cn02zljq32jffvirx.redis.volces.com:6379",
+		Addr: "redis-cn02zljq32jffvirx.redis.ivolces.com:6379",
 		Password: "dmp_group2",
 		DB: 0,
 		PoolSize: 1000,
