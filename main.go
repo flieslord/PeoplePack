@@ -65,12 +65,17 @@ func matchCrowd(cid, uid string) bool {
 	return rdb.SIsMember(ctx, cid, uid).Val()
 }
 func isMatch(c *gin.Context) {
-	//var p People
-	//c.ShouldBind(&p)
-	//fmt.Println(p.Cid, " ", p.Uid, "123")
 	cid := c.PostForm("cid")
 	uid := c.PostForm("uid")
-	c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
+	var err error
+	var rdb *redis.Client
+	ctx := context.Background()
+	if rdb, err = initClient(); err != nil {
+		log.Printf("Redis connect error")
+	}
+	defer rdb.Close()
+	rdb.SIsMember(ctx, cid, uid).Val()
+	c.String(http.StatusOK, rdb.Options().Addr)
 }
 func updateCrowd(cid, uid string) {
 	var err error
