@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"log"
@@ -72,7 +71,7 @@ func isMatch(c *gin.Context) {
 	//fmt.Println(p.Cid, " ", p.Uid, "123")
 	cid := c.PostForm("cid")
 	uid := c.PostForm("uid")
-	c.String(http.StatusOK, "%t pty", matchCrowd(cid, uid))
+	c.String(http.StatusOK, "%t eee", matchCrowd(cid, uid))
 }
 func updateCrowd(cid, uid string) {
 	var err error
@@ -100,7 +99,7 @@ func update(c *gin.Context) {
 func main() {
 	setUpLogger()
 	r := gin.Default()
-	file, err := os.Open("./data/test.txt")
+	file, err := os.Open("./test.txt")
 	if err != nil {
 		log.Printf("File open error")
 	}
