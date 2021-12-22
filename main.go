@@ -27,10 +27,9 @@ func setUpLogger() {
 //初始化redis客户端
 func initClient() (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: "redis-cn02zljq32jffvirx.redis.volces.com:6379",
 		Password: "",
 		DB: 0,
-		PoolSize: 1000,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 	defer cancel()
