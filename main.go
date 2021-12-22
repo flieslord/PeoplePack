@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"log"
@@ -12,9 +13,11 @@ import (
 	"sync"
 	"time"
 )
+
 var (
 	wg sync.WaitGroup
 )
+
 //type People struct {
 //	Cid string `json:"cid"`
 //	Uid string `json:"uid"`
@@ -25,11 +28,12 @@ func setUpLogger() {
 }
 func initClient() (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
-		Password: "",
-		DB: 0,
+		Addr:     "redis-cn02zljq32jffvirx.redis.volces.com:6379",
+		Password: "dmp_group2",
+		DB:       0,
+		PoolSize: 1000,
 	})
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
@@ -46,7 +50,7 @@ func addToRedis(lines []string) {
 		log.Printf("Redis connect error")
 	}
 	defer rdb.Close()
-	for i := 0; i < len(lines); i++ {
+	for i := 0; i < len(lines)-1; i++ {
 		strs := strings.Split(lines[i], " ")
 		rdb.SAdd(ctx, strs[0], strs[1])
 	}
@@ -68,7 +72,7 @@ func isMatch(c *gin.Context) {
 	//fmt.Println(p.Cid, " ", p.Uid, "123")
 	cid := c.PostForm("cid")
 	uid := c.PostForm("uid")
-	c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
+	c.String(http.StatusOK, "%t pty", matchCrowd(cid, uid))
 }
 func updateCrowd(cid, uid string) {
 	var err error
@@ -77,6 +81,14 @@ func updateCrowd(cid, uid string) {
 	if rdb, err = initClient(); err != nil {
 		log.Printf("Redis connect error")
 	}
+	go func(cid string, uid string) {
+		wg.Add(1)
+		file, _ := os.OpenFile("./data/test.txt", os.O_APPEND, 0744)
+		writer := bufio.NewWriter(file)
+		fmt.Fprintln(writer, cid+" "+uid)
+		writer.Flush()
+	}(cid, uid)
+	wg.Wait()
 	defer rdb.Close()
 	rdb.SAdd(ctx, cid, uid)
 }
@@ -107,12 +119,20 @@ func main() {
 			go addToRedis(lines)
 		}
 	}
+	if lines != nil {
+		go addToRedis(lines)
+	}
 	wg.Wait()
-	r.POST("/matchCrowd", func (c *gin.Context) {
+	r.POST("/matchCrowd", func(c *gin.Context) {
 		isMatch(c)
 	})
-	r.POST("/updateCrowd", func (c *gin.Context) {
+	r.POST("/updateCrowd", func(c *gin.Context) {
 		update(c)
+	})
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Ping OK",
+		})
 	})
 	log.Printf("Server start succeed")
 	r.Run(":8080")
