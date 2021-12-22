@@ -27,9 +27,9 @@ func setUpLogger() {
 func initClient() (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr: "redis-cn02zljq32jffvirx.redis.volces.com:6379",
-		Password: "",
+		Password: "dmp_group2",
 		DB: 0,
-		PoolSize: 100000000000,
+		PoolSize: 1000,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 	defer cancel()
