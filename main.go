@@ -14,9 +14,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 )
+
 var (
 	wg sync.WaitGroup
 )
+
 //type People struct {
 //	Cid string `json:"cid"`
 //	Uid string `json:"uid"`
@@ -26,15 +28,16 @@ func setUpLogger() {
 	logFileLocation, _ := os.OpenFile("./log/test.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0744)
 	log.SetOutput(logFileLocation)
 }
+
 //初始化redis客户端
 func initClient() (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr:     "localhost:6379",
 		Password: "",
-		DB: 0,
+		DB:       0,
 		PoolSize: 1000,
 	})
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
@@ -42,6 +45,7 @@ func initClient() (*redis.Client, error) {
 	}
 	return rdb, nil
 }
+
 //服务器启动后将文件内容存入redis
 func addToRedis(lines []string) {
 	wg.Add(1)
@@ -58,6 +62,7 @@ func addToRedis(lines []string) {
 	}
 	wg.Done()
 }
+
 //判定服务
 func matchCrowd(cid, uid string) bool {
 	var err error
@@ -77,6 +82,7 @@ func isMatch(c *gin.Context) {
 	uid := c.PostForm("uid")
 	c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
 }
+
 //增量更新
 func updateCrowd(cid, uid string) {
 	var err error
@@ -90,7 +96,7 @@ func updateCrowd(cid, uid string) {
 		wg.Add(1)
 		file, _ := os.OpenFile("./data/test.txt", os.O_APPEND, 0744)
 		writer := bufio.NewWriter(file)
-		fmt.Fprintln(writer, cid + " " + uid)
+		fmt.Fprintln(writer, cid+" "+uid)
 		writer.Flush()
 	}(cid, uid)
 	wg.Wait()
@@ -105,7 +111,7 @@ func update(c *gin.Context) {
 func main() {
 	setUpLogger()
 	r := gin.Default()
-	file, err := os.Open("./data/test.txt")
+	file, err := os.Open("root/data/test.txt")
 	if err != nil {
 		log.Printf("File open error")
 	}
@@ -126,13 +132,14 @@ func main() {
 		}
 	}
 	if lines != nil {
+		fmt.Println(lines)
 		go addToRedis(lines)
 	}
 	wg.Wait()
-	r.POST("/matchCrowd", func (c *gin.Context) {
+	r.POST("/matchCrowd", func(c *gin.Context) {
 		isMatch(c)
 	})
-	r.POST("/updateCrowd", func (c *gin.Context) {
+	r.POST("/updateCrowd", func(c *gin.Context) {
 		update(c)
 	})
 	r.GET("/ping", func(c *gin.Context) {
