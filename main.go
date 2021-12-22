@@ -73,6 +73,7 @@ func isMatch(c *gin.Context) {
 	//fmt.Println(p.Cid, " ", p.Uid, "123")
 	cid := c.PostForm("cid")
 	uid := c.PostForm("uid")
+	fmt.Println("cid:"+cid+"  uid:"+uid)
 	c.String(http.StatusOK, "%t eee", matchCrowd(cid, uid))
 }
 func updateCrowd(cid, uid string) {
