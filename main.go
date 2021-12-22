@@ -23,17 +23,14 @@ var (
 //	Cid string `json:"cid"`
 //	Uid string `json:"uid"`
 //}
-//设置日志输出位置
 func setUpLogger() {
 	logFileLocation, _ := os.OpenFile("./log/test.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0744)
 	log.SetOutput(logFileLocation)
 }
-
-//初始化redis客户端
 func initClient() (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
+		Addr:     "redis-cn02zljq32jffvirx.redis.volces.com:6379",
+		Password: "dmp_group2",
 		DB:       0,
 		PoolSize: 1000,
 	})
@@ -45,8 +42,6 @@ func initClient() (*redis.Client, error) {
 	}
 	return rdb, nil
 }
-
-//服务器启动后将文件内容存入redis
 func addToRedis(lines []string) {
 	wg.Add(1)
 	var rdb *redis.Client
@@ -56,14 +51,12 @@ func addToRedis(lines []string) {
 		log.Printf("Redis connect error")
 	}
 	defer rdb.Close()
-	for i := 0; i < len(lines); i++ {
+	for i := 0; i < len(lines)-1; i++ {
 		strs := strings.Split(lines[i], " ")
 		rdb.SAdd(ctx, strs[0], strs[1])
 	}
 	wg.Done()
 }
-
-//判定服务
 func matchCrowd(cid, uid string) bool {
 	var err error
 	var rdb *redis.Client
@@ -80,10 +73,8 @@ func isMatch(c *gin.Context) {
 	//fmt.Println(p.Cid, " ", p.Uid, "123")
 	cid := c.PostForm("cid")
 	uid := c.PostForm("uid")
-	c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
+	c.String(http.StatusOK, "%t eee", matchCrowd(cid, uid))
 }
-
-//增量更新
 func updateCrowd(cid, uid string) {
 	var err error
 	var rdb *redis.Client
@@ -91,10 +82,9 @@ func updateCrowd(cid, uid string) {
 	if rdb, err = initClient(); err != nil {
 		log.Printf("Redis connect error")
 	}
-	//写入源文件
 	go func(cid string, uid string) {
 		wg.Add(1)
-		file, _ := os.OpenFile("./data/test.txt", os.O_APPEND, 0744)
+		file, _ := os.OpenFile("root/data/test.txt", os.O_APPEND, 0744)
 		writer := bufio.NewWriter(file)
 		fmt.Fprintln(writer, cid+" "+uid)
 		writer.Flush()
@@ -119,7 +109,6 @@ func main() {
 	lines := []string{}
 	iterator := 0
 	scanner := bufio.NewScanner(file)
-	//逐行读取文件，每2000行开启一个协程将它存储到redis
 	for scanner.Scan() {
 		line := scanner.Text()
 		iterator++
