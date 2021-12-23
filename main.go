@@ -97,6 +97,7 @@ func updateCrowd(cid, uid string) {
 func update(c *gin.Context) {
 	cid := c.PostForm("cid")
 	uid := c.PostForm("uid")
+	fmt.Println("cid:"+cid+"  uid:"+uid)
 	updateCrowd(cid, uid)
 }
 func main() {
