@@ -19,7 +19,7 @@ import (
 
 var (
 	log     *zap.SugaredLogger
-	wg      sync.WaitGroup
+	_       sync.WaitGroup
 	datadir string
 )
 
@@ -31,9 +31,7 @@ func setupLogger() error {
 		MaxAge:     28,    //days
 		Compress:   false, // disabled by default
 	}
-	// writer := zapcore.AddSync(os.Stdout)  // 设置日志输出的设备，这里还是使用标准输出，也可以传一个 File 类型让它写入到文件
 	writer := zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(&hook))
-	// encoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())  // 设置编码器，即日志输出的格式，默认提供了 json 和 console 两种编码器，这里我们还是使用 json 的编码器
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder   // 修改时间戳的格式
 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder // 日志级别使用大写显示
@@ -51,7 +49,7 @@ func initClient() (*redis.Client, error) {
 		Addr:     "redis-cn02zljq32jffvirx.redis.volces.com:6379",
 		Password: "dmp_group2",
 		DB:       0,
-		PoolSize: 10,
+		PoolSize: 2000,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -70,17 +68,32 @@ func addToRedis(filename string) error {
 	if err != nil {
 		log.Fatalf("Redis connect error: %s", err)
 	}
-	defer rdb.Close()
+	defer func(rdb *redis.Client) {
+		err := rdb.Close()
+		if err != nil {
+			log.Warnf("redis close failed: %s", err)
+		}
+	}(rdb)
 
 	pipe := rdb.Pipeline()
-	defer pipe.Close()
+	defer func(pipe redis.Pipeliner) {
+		err := pipe.Close()
+		if err != nil {
+			log.Warnf("redis pipline close failed: %s", err)
+		}
+	}(pipe)
 
 	crowdfile := datadir + "/" + filename
 	file, err := os.Open(crowdfile)
 	if err != nil {
 		log.Fatalf("open file fail: %s", err)
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			log.Warnf("file close failed: %s", err)
+		}
+	}(file)
 
 	iterator := 0
 	scanner := bufio.NewScanner(file)
@@ -94,7 +107,6 @@ func addToRedis(filename string) error {
 			if err != nil {
 				log.Fatalf("%s pipeline error:%s", filename, err)
 			}
-			// log.Infof("%s add to redis: %d", filename, len(cmds))
 			iterator = 0
 		}
 	}
@@ -103,7 +115,6 @@ func addToRedis(filename string) error {
 		if err != nil {
 			log.Fatalf("%s pipeline error: %s", filename, err)
 		}
-		// log.Infof("%s add to redis: %d", filename, len(cmds))
 		iterator = 0
 	}
 
@@ -116,56 +127,50 @@ func matchCrowd(cid, uid string) bool {
 	var err error
 	var rdb *redis.Client
 	if rdb, err = initClient(); err != nil {
-		log.Fatalf("Redis connect error: %s", err)
+		log.Warnf("Redis connect error: %s", err)
 	}
-	defer rdb.Close()
+	defer func(rdb *redis.Client) {
+		err := rdb.Close()
+		if err != nil {
+			log.Warnf("redis closed failed: %s", err)
+		}
+	}(rdb)
 	return rdb.SIsMember(context.Background(), cid, uid).Val()
 }
 
 func isMatch(c *gin.Context) {
 	cid := c.Query("cid")
 	uid := c.Query("uid")
-	// log.Infof("cid: \"%s\" \t uid: \"%s\"", cid, uid)
-	if cid == "" || uid == "" {
-		c.String(http.StatusOK, "miss params")
-	} else {
-		c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
-	}
+	c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
 }
 
 func init() {
-	datadir = "data"
 	if err := setupLogger(); err != nil {
 		log.Fatalf("setupLogger err: %v", err)
 	}
 }
 
 func main() {
-
-	rd, err := ioutil.ReadDir(datadir)
+	rd, err := ioutil.ReadDir("data")
 	if err != nil {
 		log.Fatalf("read dir fail: %s", err)
 	}
 
 	for _, fi := range rd {
-		// wg.Add(1)
-		addToRedis(fi.Name())
+		if err := addToRedis(fi.Name()); err != nil {
+			log.Fatalf("%s sync to redis failed: %s", fi.Name(), err)
+		}
 	}
 
-	wg.Wait()
-
 	r := gin.Default()
-
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Ping OK",
-		})
-	})
 
 	r.GET("/matchCrowd", func(c *gin.Context) {
 		isMatch(c)
 	})
 
-	log.Info("Server start succeed")
-	r.Run(":8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("server start failed: %s", err)
+	} else {
+		log.Info("server start succeed")
+	}
 }
