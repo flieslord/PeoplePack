@@ -123,7 +123,6 @@ func matchCrowd(cid, uid string) bool {
 }
 
 func isMatch(c *gin.Context) {
-<<<<<<< HEAD
 	cid := c.Query("cid")
 	uid := c.Query("uid")
 	log.Infof("cid: \"%s\" \t uid: \"%s\"", cid, uid)
@@ -131,38 +130,14 @@ func isMatch(c *gin.Context) {
 		c.String(http.StatusOK, "miss params")
 	} else {
 		c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
-=======
-	//var p People
-	//c.ShouldBind(&p)
-	//fmt.Println(p.Cid, " ", p.Uid, "123")
-	cid := c.PostForm("cid")
-	uid := c.PostForm("uid")
-	fmt.Println("cid:"+cid+"  uid:"+uid)
-	c.String(http.StatusOK, "%t eee", matchCrowd(cid, uid))
-}
-func updateCrowd(cid, uid string) {
-	var err error
-	var rdb *redis.Client
-	ctx := context.Background()
-	if rdb, err = initClient(); err != nil {
-		log.Printf("Redis connect error")
->>>>>>> dev
 	}
 }
-<<<<<<< HEAD
 
 func init() {
 	datadir = "data"
 	if err := setupLogger(); err != nil {
 		log.Fatalf("setupLogger err: %v", err)
 	}
-=======
-func update(c *gin.Context) {
-	cid := c.PostForm("cid")
-	uid := c.PostForm("uid")
-	fmt.Println("cid:"+cid+"  uid:"+uid)
-	updateCrowd(cid, uid)
->>>>>>> dev
 }
 
 func main() {
