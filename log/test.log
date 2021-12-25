@@ -1,0 +1,2 @@
+2021-12-25T23:57:18.157+0800	INFO	PeoplePack/main.go:65	crowd c0001 starts to sync to redis
+2021-12-25T23:57:18.339+0800	FATAL	PeoplePack/main.go:89	open file fail: open /c0001: no such file or directory

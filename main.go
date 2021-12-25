@@ -18,9 +18,8 @@ import (
 )
 
 var (
-	log     *zap.SugaredLogger
-	_       sync.WaitGroup
-	datadir string
+	log *zap.SugaredLogger
+	_   sync.WaitGroup
 )
 
 func setupLogger() error {
@@ -83,7 +82,7 @@ func addToRedis(filename string) error {
 		}
 	}(pipe)
 
-	crowdfile := datadir + "/" + filename
+	crowdfile := "data" + "/" + filename
 	file, err := os.Open(crowdfile)
 	if err != nil {
 		log.Fatalf("open file fail: %s", err)
