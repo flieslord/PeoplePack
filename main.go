@@ -125,7 +125,7 @@ func matchCrowd(cid, uid string) bool {
 func isMatch(c *gin.Context) {
 	cid := c.Query("cid")
 	uid := c.Query("uid")
-	log.Infof("cid: \"%s\" \t uid: \"%s\"", cid, uid)
+	// log.Infof("cid: \"%s\" \t uid: \"%s\"", cid, uid)
 	if cid == "" || uid == "" {
 		c.String(http.StatusOK, "miss params")
 	} else {
