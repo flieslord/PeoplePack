@@ -6,4 +6,4 @@ RUN chmod +x /root/server \
 COPY ./data/* /root/data/
 COPY ./log/* /root/log/
 EXPOSE 8080
-CMD /root/server
+CMD cd /root && ./server
