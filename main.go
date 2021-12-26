@@ -99,7 +99,7 @@ func addToRedis(filename string) error {
 	for scanner.Scan() {
 		iterator++
 		ids := strings.Split(scanner.Text(), ",") // [cid, uid]
-		pipe.SAdd(context.Background(), ids[0], ids[1])
+		pipe.SAdd(context.Background(), ids[1], ids[0])
 
 		if iterator == 10000 {
 			_, err := pipe.Exec(context.Background())
@@ -140,7 +140,7 @@ func matchCrowd(cid, uid string) bool {
 func isMatch(c *gin.Context) {
 	cid := c.Query("cid")
 	uid := c.Query("uid")
-	c.String(http.StatusOK, "%t", matchCrowd(cid, uid))
+	c.String(http.StatusOK, "%t", matchCrowd(uid, cid))
 }
 
 func init() {
